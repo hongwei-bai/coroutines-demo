@@ -1,25 +1,26 @@
 package com.hongwei.coroutines_demo.model.service
 
+import com.hongwei.coroutines_demo.model.response.AccountHolderResponse
+import com.hongwei.coroutines_demo.model.response.AccountsResponse
 import com.hongwei.coroutines_demo.model.response.ContentResponse
 import com.hongwei.coroutines_demo.model.response.RateResponse
-import io.reactivex.Observable
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Query
 
 interface DemoService {
     @GET("content.do")
-    suspend fun getContent(): Response<*>
+    suspend fun getContentWithWrapper(): Response<*>
 
     @GET("content-slow.do")
-    suspend fun getContentBody(): ContentResponse
+    suspend fun getContent(): ContentResponse
 
-    @GET("content-slow.do")
-    fun getContentRx(): Observable<ContentResponse>
-
-    // rate
-    @GET("rate-slow.do")
-    suspend fun getRate(): RateResponse
+    @GET("accounts-slow.do")
+    suspend fun getAccounts(): AccountsResponse
 
     @GET("rate-slow.do")
-    fun getRateRx(): Observable<RateResponse>
+    suspend fun getRate(@Query(value = "accountNumber") accountNumber: Long): RateResponse
+
+    @GET("accountholder-slow.do")
+    suspend fun getAccountHolder(@Query(value = "accountNumber") accountNumber: Long): AccountHolderResponse
 }

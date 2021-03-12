@@ -1,55 +1,91 @@
 package com.hongwei.coroutines_demo.viewmodel
 
-import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hongwei.coroutines_demo.model.network.NetworkClient
-import kotlinx.coroutines.CoroutineExceptionHandler
+import com.hongwei.coroutines_demo.model.demo.*
+import com.hongwei.coroutines_demo.model.service.DemoService
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.lang.NullPointerException
+import javax.inject.Inject
+import kotlin.system.measureTimeMillis
 
-class DemoViewModel : ViewModel() {
-    val handler = CoroutineExceptionHandler { _, exception ->
-        when (exception) {
-            is HttpException -> {
-                when (exception.code()) {
-                    in 400 until 500 -> Log.w("bbbb", "[CoroutineExceptionHandler]HttpException/Client Error: $exception")
-                    in 500 until 600 -> Log.w("bbbb", "[CoroutineExceptionHandler]HttpException/Server Error: $exception")
-                    else -> Log.w("bbbb", "[CoroutineExceptionHandler]HttpException/Other Error: $exception")
-                }
+@HiltViewModel
+class DemoViewModel @Inject constructor(
+    private val coroutineExceptionHelper: CoroutineExceptionHelper,
+    private val coroutinesBasicCalls: CoroutinesBasicCalls,
+    private val coroutinesCascadeCalls: CoroutinesCascadeCalls,
+    private val coroutinesParallelCalls: CoroutinesParallelCalls,
+    private val coroutinesParallelCalls2BadExample: CoroutinesParallelCalls2_BadExample,
+    private val coroutinesParallelCalls3: CoroutinesParallelCalls3,
+    private val coroutinesParallelCalls4: CoroutinesParallelCalls4,
+    private val demoService: DemoService
+) : ViewModel() {
+    fun load() {
+        viewModelScope.launch(coroutineExceptionHelper.handler) {
+            loading.value = true
+
+//            coroutinesBasicCalls.fetchContentWithWrapper()
+
+            // (Plan 1)
+//            ratesInfo.value = coroutinesCascadeCalls.load()
+
+            // (Plan 2)
+//            coroutinesParallelCalls.load(coroutineContext) {
+//                ratesInfo.value = it
+//                loading.value = false
+//            }
+
+            // (Plan 3)
+//            val content = async { demoService.getContent() }
+//            val rate = async {
+//                val accounts = demoService.getAccounts()
+//                demoService.getRate(accounts.accounts.first())
+//            }
+//            ratesInfo.value = RateUtil.toDisplay(content.await().content, rate.await().rate)
+
+            // (Plan 4)
+//            val td = measureTimeMillis {
+//                ratesInfo.value = coroutinesParallelCalls2BadExample.load(coroutineContext)
+//            }
+//            perf.value = "Api call consumed $td ms"
+
+            // (Plan 5)
+//            val td = measureTimeMillis {
+//                ratesInfo.value = coroutinesParallelCalls3.load(coroutineContext)
+//            }
+//            perf.value = "Api call consumed $td ms"
+
+            // (Plan 6)
+            val td = measureTimeMillis {
+                ratesInfo.value = coroutinesParallelCalls4.load(coroutineContext)
             }
-            is NullPointerException -> Log.w("bbbb", "[CoroutineExceptionHandler]NullPointerException: $exception")
-            else -> Log.w("bbbb", "[CoroutineExceptionHandler]Generic exception: $exception")
+            perf.value = "Api call consumed $td ms"
+
+            loading.value = false
         }
     }
 
     init {
-        viewModelScope.launch(handler) {
-            fetchContentBody()
-
-//            fetchContent()
+        coroutineExceptionHelper.onException { _, throwable ->
+            loading.value = false
+            error.value = throwable
         }
     }
 
-    private suspend fun fetchContent() {
-        val response = NetworkClient.demoApi.getContent()
-        Log.d("bbbb", "response: $response")
-
-        Log.d("bbbb", "isSuccessful: ${response.isSuccessful}")
-
-        Log.d("bbbb", "${response.code()}")
+    val ratesInfo: MutableLiveData<String> by lazy {
+        MutableLiveData<String>()
     }
 
-    private suspend fun fetchContentBody() {
-        val content = NetworkClient.demoApi.getContentBody()
-        Log.d("bbbb", "content: ${content.content}")
+    val perf: MutableLiveData<String> by lazy {
+        MutableLiveData<String>()
     }
 
-    private fun produceNullPointerException() {
-        var problem: String? = "20"
-        problem = null
-        val never = problem!!.toLong()
-        Log.d("bbbb", "problem: $problem, never: $never")
+    val loading: MutableLiveData<Boolean> by lazy {
+        MutableLiveData<Boolean>()
+    }
+
+    val error: MutableLiveData<Throwable?> by lazy {
+        MutableLiveData<Throwable?>()
     }
 }

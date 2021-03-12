@@ -2,11 +2,11 @@
     <!-- Base application theme. -->
     <style name="Theme.CoroutinesDemo.DayNight.NoActionBar" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">#FFCC31</item>
+        <item name="colorPrimary">#FF5000</item>
         <item name="colorPrimaryVariant">#FF5000</item>
         <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">#FFCC31</item>
+        <item name="colorSecondary">#FF5000</item>
         <item name="colorSecondaryVariant">#39A444</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
