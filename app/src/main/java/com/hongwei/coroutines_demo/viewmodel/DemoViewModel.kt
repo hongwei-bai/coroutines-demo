@@ -6,9 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.hongwei.coroutines_demo.model.demo.*
 import com.hongwei.coroutines_demo.model.service.DemoService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.system.measureTimeMillis
+import com.hongwei.coroutines_demo.model.demo.RxJavaBranch.OnLoadFinishListener as OnLoadFinishListener1
 
 @HiltViewModel
 class DemoViewModel @Inject constructor(
@@ -18,10 +19,11 @@ class DemoViewModel @Inject constructor(
     private val coroutinesParallelCalls: CoroutinesParallelCalls,
     private val coroutinesParallelCalls2BadExample: CoroutinesParallelCalls2_BadExample,
     private val coroutinesParallelCalls3: CoroutinesParallelCalls3,
-    private val coroutinesParallelCalls4: CoroutinesParallelCalls4,
+    private val coroutinesParallelCalls4: CoroutinesBranch,
+    private val rxJavaBranch: RxJavaBranch,
     private val demoService: DemoService
 ) : ViewModel() {
-    fun load() {
+    fun load(accountNumberString: String) {
         viewModelScope.launch(coroutineExceptionHelper.handler) {
             loading.value = true
 
@@ -57,13 +59,39 @@ class DemoViewModel @Inject constructor(
 //            perf.value = "Api call consumed $td ms"
 
             // (Plan 6)
-            val td = measureTimeMillis {
-                ratesInfo.value = coroutinesParallelCalls4.load(coroutineContext)
-            }
-            perf.value = "Api call consumed $td ms"
+//            val td = measureTimeMillis {
+//                ratesInfo.value = coroutinesParallelCalls4.load(coroutineContext, accountNumberString.toLong())
+//            }
+//            perf.value = "Api call consumed $td ms"
 
+            // branch
+            rxJavaBranch.listener = object : OnLoadFinishListener1 {
+                override fun onSuccess(result: String) {
+                    loading.value = false
+                    ratesInfo.value = result
+                }
+
+                override fun onError(exception: Throwable) {
+                    loading.value = false
+                    error.value = exception
+                }
+            }
+            rxJavaBranch.load(accountNumberString.toLong())
+
+//            loading.value = false
+        }
+    }
+
+    fun loadAccounts() {
+        viewModelScope.launch(coroutineExceptionHelper.handler) {
+            loading.value = true
+            accounts.value = demoService.getAccounts().accounts.map { it.toString() }
             loading.value = false
         }
+    }
+
+    fun cancel() {
+        viewModelScope.cancel("Manual cancelling all jobs")
     }
 
     init {
@@ -75,6 +103,10 @@ class DemoViewModel @Inject constructor(
 
     val ratesInfo: MutableLiveData<String> by lazy {
         MutableLiveData<String>()
+    }
+
+    val accounts: MutableLiveData<List<String>> by lazy {
+        MutableLiveData<List<String>>()
     }
 
     val perf: MutableLiveData<String> by lazy {

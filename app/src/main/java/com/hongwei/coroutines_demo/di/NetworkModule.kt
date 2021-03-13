@@ -2,6 +2,7 @@ package com.hongwei.coroutines_demo.di
 
 import com.hongwei.coroutines_demo.constants.DemoEndpoint
 import com.hongwei.coroutines_demo.model.service.DemoService
+import com.hongwei.coroutines_demo.model.service.RxJavaDemoService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,5 +44,17 @@ object NetworkModule {
             .client(okHttpClient)
             .build()
             .create(DemoService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRxJavaDemoService(okHttpClient: OkHttpClient): RxJavaDemoService {
+        return Retrofit.Builder()
+            .baseUrl(DemoEndpoint.baseUrl)
+            .addConverterFactory(GsonConverterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .client(okHttpClient)
+            .build()
+            .create(RxJavaDemoService::class.java)
     }
 }

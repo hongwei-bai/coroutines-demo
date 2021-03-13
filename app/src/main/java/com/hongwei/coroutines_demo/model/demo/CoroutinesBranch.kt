@@ -8,23 +8,26 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
-class CoroutinesParallelCalls4 @Inject constructor(
+class CoroutinesBranch @Inject constructor(
     private val demoService: DemoService
 ) {
-    suspend fun load(coroutineContext: CoroutineContext): String {
-        val (holder, content, rate) = coroutineContext.runInParallel(
-            { demoService.getAccountHolder(0L).name },
+    suspend fun load(coroutineContext: CoroutineContext, accountNumber: Long): String {
+        val (holder, content, rate) = coroutineContext.runAsync(
+            { demoService.getAccountHolder(accountNumber).name },
             { demoService.getContent().content },
             {
-                val accounts = demoService.getAccounts().accounts
-                demoService.getRate(accounts.first()).rate
+                if (demoService.isSaverAccount(accountNumber).isSaverAccount) {
+                    demoService.getRate(accountNumber).rate
+                } else {
+                    0.00
+                }
             }
         )
         return RateUtil.toDisplay(holder as String, content as String, rate as Double)
     }
 
     suspend fun load2(coroutineContext: CoroutineContext): String {
-        val r = coroutineContext.runInParallel(
+        val r = coroutineContext.runAsync(
             { demoService.getContent().content },
             {
                 val accounts = demoService.getAccounts().accounts
@@ -34,7 +37,7 @@ class CoroutinesParallelCalls4 @Inject constructor(
         return RateUtil.toDisplay(r[0] as String, r[1] as Double)
     }
 
-    private suspend fun CoroutineContext.runInParallel(vararg functions: suspend () -> Any): Array<*> {
+    private suspend fun CoroutineContext.runAsync(vararg functions: suspend () -> Any): Array<*> {
         return withContext(this) {
             val a1 = Array<Deferred<*>?>(functions.size) { null }
             functions.forEachIndexed { i, _ ->
