@@ -17,18 +17,14 @@ class CoroutinesParallelCalls @Inject constructor(
 ) {
     suspend fun load(coroutineContext: CoroutineContext, action: (String) -> Unit) {
         withContext(coroutineContext) {
-            val content = async { demoService.getContent() }
+            val content = async {
+                demoService.getContent()
+            }
             val rate = async {
                 val accounts = demoService.getAccounts()
                 demoService.getRate(accounts.accounts.first())
             }
             action.invoke(RateUtil.toDisplay(content.await().content, rate.await().rate))
-            Log.d("bbbb", "CoroutinesParallelCalls finished.")
-
-//            val td = measureTimeMillis {
-//
-//            }
-//            Log.d("bbbb", "consumed : $td ms ")
         }
     }
 }

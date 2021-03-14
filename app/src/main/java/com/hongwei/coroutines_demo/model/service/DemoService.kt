@@ -15,11 +15,14 @@ interface DemoService {
     @GET("accounts.do")
     suspend fun getAccounts(): AccountsResponse
 
-    @GET("rate-slow.do")
+    @GET("rate.do")
     suspend fun getRate(@Query(value = "accountNumber") accountNumber: Long): RateResponse
 
     @GET("accountholder-slow.do")
     suspend fun getAccountHolder(@Query(value = "accountNumber") accountNumber: Long): AccountHolderResponse
+
+    @GET("accounttype-slow.do")
+    suspend fun getAccountType(@Query(value = "accountNumber") accountNumber: Long): AccountHolderResponse
 
     @GET("issaveraccount-slow.do")
     suspend fun isSaverAccount(@Query(value = "accountNumber") accountNumber: Long): IsSaverAccountResponse

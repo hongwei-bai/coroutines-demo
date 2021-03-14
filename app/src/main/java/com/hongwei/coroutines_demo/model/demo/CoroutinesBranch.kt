@@ -5,13 +5,22 @@ import com.hongwei.coroutines_demo.util.RateUtil
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import java.lang.IllegalArgumentException
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 class CoroutinesBranch @Inject constructor(
     private val demoService: DemoService
 ) {
+    object NotSaverAccountException : IllegalArgumentException()
+
     suspend fun load(coroutineContext: CoroutineContext, accountNumber: Long): String {
+        if (demoService.isSaverAccount(accountNumber).isSaverAccount) {
+            demoService.getRate(accountNumber).rate
+        } else {
+            throw NotSaverAccountException
+        }
+
         val (holder, content, rate) = coroutineContext.runAsync(
             { demoService.getAccountHolder(accountNumber).name },
             { demoService.getContent().content },
@@ -19,9 +28,18 @@ class CoroutinesBranch @Inject constructor(
                 if (demoService.isSaverAccount(accountNumber).isSaverAccount) {
                     demoService.getRate(accountNumber).rate
                 } else {
-                    0.00
+                    throw NotSaverAccountException
                 }
             }
+        )
+        return RateUtil.toDisplay(holder as String, content as String, rate as Double)
+    }
+
+    suspend fun load22(coroutineContext: CoroutineContext, accountNumber: Long): String {
+        val (holder, content, rate) = coroutineContext.runAsync(
+            { demoService.getContent().content },
+            { demoService.getRate(accountNumber).rate },
+            { demoService.getAccountHolder(accountNumber).name }
         )
         return RateUtil.toDisplay(holder as String, content as String, rate as Double)
     }

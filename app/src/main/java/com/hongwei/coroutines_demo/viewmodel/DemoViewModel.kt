@@ -3,24 +3,27 @@ package com.hongwei.coroutines_demo.viewmodel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hongwei.coroutines_demo.model.demo.*
+import com.hongwei.coroutines_demo.model.demo.CoroutineExceptionHelper
+import com.hongwei.coroutines_demo.model.demo.CoroutinesBranch
+import com.hongwei.coroutines_demo.model.demo.CoroutinesParallelCalls4
 import com.hongwei.coroutines_demo.model.service.DemoService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.hongwei.coroutines_demo.model.demo.RxJavaBranch.OnLoadFinishListener as OnLoadFinishListener1
+import kotlin.system.measureTimeMillis
 
 @HiltViewModel
 class DemoViewModel @Inject constructor(
     private val coroutineExceptionHelper: CoroutineExceptionHelper,
-    private val coroutinesBasicCalls: CoroutinesBasicCalls,
-    private val coroutinesCascadeCalls: CoroutinesCascadeCalls,
-    private val coroutinesParallelCalls: CoroutinesParallelCalls,
-    private val coroutinesParallelCalls2BadExample: CoroutinesParallelCalls2_BadExample,
-    private val coroutinesParallelCalls3: CoroutinesParallelCalls3,
-    private val coroutinesParallelCalls4: CoroutinesBranch,
-    private val rxJavaBranch: RxJavaBranch,
+//    private val coroutinesBasicCalls: CoroutinesBasicCalls,
+//    private val coroutinesCascadeCalls: CoroutinesCascadeCalls,
+//    private val coroutinesParallelCalls: CoroutinesParallelCalls,
+//    private val coroutinesParallelCalls2BadExample: CoroutinesParallelCalls2_BadExample,
+//    private val coroutinesParallelCalls3: CoroutinesParallelCalls3,
+    private val coroutinesParallelCalls4: CoroutinesParallelCalls4,
+    private val coroutinesBranch: CoroutinesBranch,
+//    private val rxJavaBranch: RxJavaBranch,
     private val demoService: DemoService
 ) : ViewModel() {
     fun load(accountNumberString: String) {
@@ -58,27 +61,33 @@ class DemoViewModel @Inject constructor(
 //            }
 //            perf.value = "Api call consumed $td ms"
 
-            // (Plan 6)
+            // (Plan 5)
 //            val td = measureTimeMillis {
-//                ratesInfo.value = coroutinesParallelCalls4.load(coroutineContext, accountNumberString.toLong())
+//                ratesInfo.value = coroutinesParallelCalls4.load(coroutineContext)
 //            }
 //            perf.value = "Api call consumed $td ms"
 
-            // branch
-            rxJavaBranch.listener = object : OnLoadFinishListener1 {
-                override fun onSuccess(result: String) {
-                    loading.value = false
-                    ratesInfo.value = result
-                }
-
-                override fun onError(exception: Throwable) {
-                    loading.value = false
-                    error.value = exception
-                }
+            // (Plan 6)
+            val td = measureTimeMillis {
+                ratesInfo.value = coroutinesBranch.load(coroutineContext, accountNumberString.toLong())
             }
-            rxJavaBranch.load(accountNumberString.toLong())
+            perf.value = "Api call consumed $td ms"
 
-//            loading.value = false
+            // branch
+//            rxJavaBranch.listener = object : OnLoadFinishListener1 {
+//                override fun onSuccess(result: String) {
+//                    loading.value = false
+//                    ratesInfo.value = result
+//                }
+//
+//                override fun onError(exception: Throwable) {
+//                    loading.value = false
+//                    error.value = exception
+//                }
+//            }
+//            rxJavaBranch.load2(accountNumberString.toLong())
+
+            loading.value = false
         }
     }
 
